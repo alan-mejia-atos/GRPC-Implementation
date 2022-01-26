@@ -1,0 +1,130 @@
+buildscript {
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.2.7.RELEASE")
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version '2.5.8'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+//	Plugin para analisis de coverage con jacoco
+	id 'jacoco'
+//	Plugin para grpc
+	id 'com.google.protobuf' version '0.8.17'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	mapstructVersion = "1.4.0.Beta2"
+	lombokVersion = "1.18.12"
+}
+
+dependencies {
+	compileOnly "org.mapstruct:mapstruct:${mapstructVersion}", "org.projectlombok:lombok:${lombokVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}", "org.projectlombok:lombok:${lombokVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'com.h2database:h2'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.mapstruct:mapstruct:1.4.2.Final'
+	implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.5'
+
+//	// Para annotaciones de GRPC
+//	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+//	implementation 'org.springframework.boot:spring-boot-starter'
+//	implementation 'org.springframework.boot:spring-boot-configuration-processor'
+//	implementation 'net.devh:grpc-server-spring-boot-starter:2.8.0.RELEASE'     ***ESTA ANOTACION NO ME PERMITE LEVANTAR EL SERVIDOR
+
+
+//	No agregar la dependencia de abajo
+//	implementation 'com.google.protobuf:protobuf-lite:3.0.0'
+
+
+
+//	Inicia implementacion de dependencias grpc
+	runtimeOnly 'io.grpc:grpc-netty-shaded:1.43.1'
+	implementation 'io.grpc:grpc-protobuf:1.43.1'
+	implementation 'io.grpc:grpc-stub:1.43.1'
+//	Termina implementacion de dependencias grpc
+}
+
+test {
+	useJUnitPlatform()
+//	Necesario para funcionamiento de jacoco
+	finalizedBy jacocoTestReport
+}
+
+// Dependencia de jacoco
+jacocoTestReport{
+	dependsOn test
+	reports{
+		xml.required = true
+		csv.required = true
+	}
+}
+
+// Dependencia de jacoco
+jacoco{
+	toolVersion = "0.8.7"
+	reportsDirectory = layout.buildDirectory.dir("customJacocoReportDir")
+}
+
+//Dependencia de potobuf
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:3.19.1"
+	}
+	plugins {
+		grpc {
+			artifact = 'io.grpc:protoc-gen-grpc-java:1.43.1'
+		}
+	}
+	generateProtoTasks {
+		all()*.plugins {
+			grpc {}
+		}
+	}
+}
+
+//Para carpeta donde se guarda el codigo que genera protobufs
+sourceSets {
+	main {
+		proto {
+			// In addition to the default 'src/main/proto'
+			srcDir 'src/main/protobuf'
+			srcDir 'src/main/protocolbuffers'
+			// In addition to the default '**/*.proto' (use with caution).
+			// Using an extension other than 'proto' is NOT recommended,
+			// because when proto files are published along with class files, we can
+			// only tell the type of a file from its extension.
+			include '**/*.protodevel'
+		}
+		java {
+
+		}
+	}
+	test {
+		proto {
+			// In addition to the default 'src/test/proto'
+			srcDir 'src/test/protocolbuffers'
+		}
+	}
+}

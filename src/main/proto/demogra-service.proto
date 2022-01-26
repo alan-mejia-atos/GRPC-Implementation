@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_package = "com.master.grpc";
+
+service clientServiceExample{
+  rpc getClientById(clientId) returns (Client){}
+}
+
+
+message clientId{
+  int32 id = 1;
+}
+
+message Client{
+  ClientModel client = 1;
+}
+
+message ClientModel{
+  int32 id = 1;
+  string name = 2;
+  string city = 3;
+}
+
